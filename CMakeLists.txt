@@ -60,7 +60,7 @@ set_target_properties(Formal_Maths PROPERTIES LINKER_LANGUAGE CXX)
 add_subdirectory(tests)
 
 # add the install targets
-install (TARGETS Formal_Maths DESTINATION bin)
+# install (TARGETS Formal_Maths DESTINATION bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/inc/Formal_Maths.h
          DESTINATION include)
 install (FILES ${PROJECT_BINARY_DIR}/config/Formal_Maths_config.h

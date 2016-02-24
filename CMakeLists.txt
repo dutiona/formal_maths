@@ -62,9 +62,9 @@ add_subdirectory(tests)
 # add the install targets
 # install (TARGETS Formal_Maths DESTINATION bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/inc/Formal_Maths.h
-         DESTINATION include)
+         DESTINATION Formal_Maths)
 install (FILES ${PROJECT_BINARY_DIR}/config/Formal_Maths_config.h
-         DESTINATION include)
+         DESTINATION Formal_Maths)
  
  set(CONFIGURED_ONCE TRUE CACHE INTERNAL
     "A flag showing that CMake has configured at least once.")

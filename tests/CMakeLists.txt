@@ -30,4 +30,4 @@ source_group(
 
 add_executable(Tests ${source_files_headers} ${source_files_source})
 set_target_properties(Tests PROPERTIES LINKER_LANGUAGE CXX)
-target_link_libraries(Tests Formal_Maths)
+# target_link_libraries(Tests Formal_Maths)

@@ -164,9 +164,8 @@ namespace H2OFastTests {
 				catch (ExpectedException) {
 					return{};
 				}
-				catch (...) {
-					return fail(message, lineInfo);
-				}
+				catch (...) {}
+
 				return fail(message, lineInfo);
 			}
 
@@ -291,10 +290,10 @@ namespace H2OFastTests {
 				PASSED,	// test successfuly passed
 				FAILED,	// test failed to pass (an assert failed)
 				ERROR,	// an error occured during the test :
-						// any exception was catched like bad_alloc
+				// any exception was catched like bad_alloc
 				SKIPPED,// test was skipped and not run
 				NONE	// the run_scenario function wasn't run yet
-						// for the scenario holding the test
+				// for the scenario holding the test
 			};
 
 			// All available constructors
@@ -384,22 +383,23 @@ namespace H2OFastTests {
 		};
 
 		using test_t = detail::Test;
+		using test_status_t = detail::Test::Status;
 
 		std::ostream& operator<<(std::ostream& os, test_t::Status status) {
 			switch (status)	{
-			case test_t::PASSED:
+			case test_status_t::PASSED:
 				os << "PASSED";
 				break;
-			case test_t::FAILED:
+			case test_status_t::FAILED:
 				os << "FAILED";
 				break;
-			case test_t::ERROR:
+			case test_status_t::ERROR:
 				os << "ERROR";
 				break;
-			case test_t::SKIPPED:
+			case test_status_t::SKIPPED:
 				os << "SKIPPED";
 				break;
-			case test_t::NONE:
+			case test_status_t::NONE:
 			default:
 				os << "NOT RUN YET";
 				break;
@@ -437,10 +437,12 @@ namespace H2OFastTests {
 
 		// POD containing informations about a test
 		struct TestInfos {
-			const test_t& test;
-			using status_t = test_t::Status;
+			using status_t = test_status_t;
+
 			TestInfos(const test_t& t) : test(t) {}
 			TestInfos& operator=(const TestInfos&) = delete;
+
+			const test_t& test;
 		};
 
 		using tests_infos_t = TestInfos;
@@ -529,16 +531,16 @@ namespace H2OFastTests {
 					exec_time_ms_accumulator_ += test.getExecTimeMs();
 					notify(tests_infos_t{ test });
 					switch (test.getStatus()) {
-					case test_t::PASSED:
+					case test_status_t::PASSED:
 						tests_passed_.push_back(&test);
 						break;
-					case test_t::FAILED:
+					case test_status_t::FAILED:
 						tests_failed_.push_back(&test);
 						break;
-					case test_t::SKIPPED:
+					case test_status_t::SKIPPED:
 						tests_skipped_.push_back(&test);
 						break;
-					case test_t::ERROR:
+					case test_status_t::ERROR:
 						tests_with_error_.push_back(&test);
 						break;
 					default: break;

@@ -8,10 +8,11 @@ using namespace fm;
 
 int main(int /*argc*/, char* /*argv[]*/){
 
+	complex_t c = { 1, 2 };
 	uint_t r = 1;
-	
-	std::cout << Domain_R::has(r) << std::endl;
-	std::cout << Domain_N::has(int_t(-1)) << std::endl;
+
+	std::cout << R::has(r) << std::endl;
+	std::cout << N::has(int_t(-1)) << std::endl;
 
 	std::cout << "Press enter to continue...";
 	std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');

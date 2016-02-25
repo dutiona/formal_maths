@@ -16,101 +16,87 @@
 #include "Formal_Maths_config.h"
 
 #include <memory>
+#include <limits>
+#include <complex>
 
 namespace fm {
 
-	enum Sign { PLUS, MINUS };
+	using uint_t = unsigned long long int;
+	using int_t = long long int;
+	using real_t = long double;
+	using complex_t = std::complex<real_t>;
 
-	struct Infinity { Sign sign; };
-	bool operator==(Infinity lhs, Infinity rhs) {
-		return lhs.sign == rhs.sign;
-	}
 
-	struct real_t {
-		Infinity inf;
-		nullptr_t null;
-		long double val;
+	struct InfinityType {
 
-		real_t() : null(nullptr) {}
-		real_t(Infinity inf) : inf(inf) {}
-		real_t(long double val) : val(val) {}
+		enum Sign {
+			PLUS,
+			MINUS
+		};
+
+		Sign sign;
 	};
 
-	bool operator==(const real_t& lhs, const real_t& rhs) {
-		return lhs.inf == rhs.inf || lhs.val == rhs.val;
-	}
+	const InfinityType PositiveInfinity = InfinityType{ InfinityType::PLUS };
+	const InfinityType NegativeInfinity = InfinityType{ InfinityType::MINUS };
 
-	struct int_t {
-		Infinity inf;
-		nullptr_t null;
-		long long int val;
+	bool operator==(InfinityType /*lhs*/, InfinityType /*rhs*/) { return false; }
+	bool operator!=(InfinityType lhs, InfinityType rhs) { return !(lhs == rhs); }
+	bool operator<(InfinityType lhs, InfinityType rhs) { return lhs.sign == NegativeInfinity.sign && rhs.sign == PositiveInfinity.sign; }
+	bool operator<=(InfinityType lhs, InfinityType rhs) { return lhs < rhs; }
+	bool operator>(InfinityType lhs, InfinityType rhs) { return lhs.sign == PositiveInfinity.sign && rhs.sign == NegativeInfinity.sign; }
+	bool operator>=(InfinityType lhs, InfinityType rhs) { return lhs > rhs; }
 
-		int_t() : null(nullptr) {}
-		int_t(Infinity inf) : inf(inf) {}
-		int_t(long long int val) : val(val) {}
-	};
+	template<class T> bool operator==(const T& /*lhs*/, const InfinityType& /*inf*/) { return false }
+	template<class T> bool operator!=(const T& lhs, const InfinityType& inf) { return !(lhs == rhs); }
+	template<class T> bool operator>(const T& /*lhs*/, const InfinityType& inf) { return inf.sign != InfinityType::PLUS; }
+	template<class T> bool operator>=(const T& lhs, const InfinityType& inf) { return lhs > inf; }
+	template<class T> bool operator<(const T& /*lhs*/, const InfinityType& inf) { return inf.sign != InfinityType::MINUS; }
+	template<class T> bool operator<=(const T& lhs, const InfinityType& inf) { return lhs > inf; }
 
-	bool operator>=(const int_t& i, int_t nb) {
-		return !i.null && i.val >= nb;
-	}
-
-	struct uint_t {
-		Infinity inf;
-		nullptr_t null;
-		unsigned long long int val;
-
-		uint_t() : null(nullptr) {}
-		uint_t(Infinity inf) : inf(inf) {}
-		uint_t(unsigned long long int val) : val(val) {}
-	};
-
-	template<class Derived>
-	struct Domain_traits;
-
-	template<template <typename T> class Derived, typename T>
-	struct Domain {
-
-		using value_type = typename T;
-
-		static value_type getPlusInf() {
-			value_type r;
-			r.inf.sign = PLUS;
-			return r;
-		}
-		
-		static value_type getMinusInf() {
-			value_type r;
-			r.inf.sign = MINUS;
-			return r;
-		}
-		
-		static bool has(real_t r) { return Derived<T>::has(r); }
-		static bool has(int_t i) { return Derived<T>::has(i); }
-		static bool has(uint_t ui) { return Derived<T>::has(ui); }
-	};
 
 	template<class ValueType>
-	struct Domain_R_Private : Domain<Domain_R_Private, ValueType> {
+	class Domain {
+	public:
+		using value_type = ValueType;
 
-		using value_type = typename ValueType;
+		static ValueType inf() {
+			return std::numeric_limits<ValueType>::min();
+		}
 
+		static ValueType sup() {
+			return std::numeric_limits<ValueType>::max();
+		}
+
+		static bool has(InfinityType /*inf*/) { return true; }
+		static bool has(complex_t /*c*/) { return true; }
 		static bool has(real_t /*r*/) { return true; }
 		static bool has(int_t /*i*/) { return true; }
 		static bool has(uint_t /*ui*/) { return true; }
 	};
 
-	template<class ValueType>
-	struct Domain_N_Private : Domain<Domain_N_Private, ValueType> {
+	using C = Domain<complex_t>;
 
-		using value_type = typename ValueType;
-
-		static bool has(real_t /*r*/) { return false; }
-		static bool has(int_t i) { return i >= 0; }
-		static bool has(uint_t ui) { return true; }
+	class R : Domain<real_t>{
+	public:
+		using Domain<real_t>::has;
+		static bool has(complex_t c) { return c.imag() == 0; }
 	};
 
-	using Domain_R = Domain_R_Private<real_t>;
-	using Domain_N = Domain_N_Private<uint_t>;
+	class Z : Domain<int_t> {
+	public:
+		using Domain<int_t>::has;
+		static bool has(complex_t /*c*/) { return false; }
+		static bool has(real_t /*r*/) { return false; }
+	};
+
+	class N : Domain<uint_t> {
+	public:
+		using Domain<uint_t>::has;
+		static bool has(complex_t /*c*/) { return false; }
+		static bool has(real_t /*r*/) { return false; }
+		static bool has(int_t i) { return i >= 0; }
+	};
 
 }
 

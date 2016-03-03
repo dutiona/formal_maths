@@ -10,8 +10,8 @@ using namespace fm;
 
 int main(int /*argc*/, char* /*argv[]*/){
 
-	const auto f1 = ComputableHolder<real_t>{ std::move(std::make_unique<Const<real_t>>(15.)) };
-	const auto f2 = ComputableHolder<uint_t>{ std::move(std::make_unique<Linear<uint_t>>(40)) };
+	const auto f1 = make_computable<Const<real_t>>(15.);
+	const auto f2 = make_computable<Linear<uint_t>>(40);
 	const auto f3 = f1 + f2;
 	const auto deriv = f3.deritative();
 	const auto prim = f3.primitive();

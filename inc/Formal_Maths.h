@@ -146,6 +146,8 @@ namespace fm {
 	class Computable {
 	public:
 
+		using value_type = typename ValueType;
+
 		Computable() {}
 		Computable(const Computable&) = delete;
 		Computable& operator=(const Computable&) = delete;
@@ -171,20 +173,35 @@ namespace fm {
 	public:
 
 		ComputableHolder(){}
-
-		ComputableHolder(std::unique_ptr<Computable<ValueType>>&& computable) :
-			computable_(std::move(computable))
+		ComputableHolder(const std::shared_ptr<Computable<ValueType>>& computable) :
+			computable_(computable)
 		{}
+
+		ComputableHolder(const ComputableHolder& comp) : computable_(comp.computable_) {}
+		ComputableHolder& operator=(const ComputableHolder& comp) {
+			computable_ = comp.computable_;
+			return *this;
+		}
 
 		ValueType operator()(ValueType value) const { return (*computable_)(value); }
 		ComputableHolder<ValueType> deritative() const { return computable_->deritative(); }
 		ComputableHolder<ValueType> primitive() const { return computable_->primitive(); }
 
+		Computable<ValueType>& operator*() { return computable_; }
+		Computable<ValueType>* operator&() { return computable_.get(); }
+		Computable<ValueType>* operator->() { return computable_.get(); }
+
 	private:
 
-		std::unique_ptr<Computable<ValueType>> computable_;
+		std::shared_ptr<Computable<ValueType>> computable_;
 
 	};
+
+	template<class Function, class ... Args>
+	ComputableHolder<typename Function::value_type> make_computable(Args&& ... args) {
+		return{ std::make_shared<Function>(std::forward<Args>(args)...) };
+	}
+
 
 	//Constant definition
 
@@ -203,12 +220,12 @@ namespace fm {
 		}
 
 		virtual ComputableHolder<ValueType> computeDeritative() const override {
-			return{};// Const<ValueType>{ 0 };
+			return make_computable<Const<ValueType>>(static_cast<ValueType>(0));
 		}
 
 		virtual ComputableHolder<ValueType> computePrimitive() const override {
-			return{};// Linear<ValueType>{ value_ };
-		}
+			return make_computable<Const<ValueType>>(value_);
+		};
 
 		ValueType value_;
 
@@ -231,8 +248,8 @@ namespace fm {
 		}
 
 		virtual ComputableHolder<ValueType> computeDeritative() const override {
-			return{};// Const<ValueType>{ 1 };
-		}
+			return make_computable<Const<ValueType>>(value_);
+		};
 
 		virtual ComputableHolder<ValueType> computePrimitive() const override {
 			return{};// Const<real_t>{ 0.5 } *Linear<real_t>{ 1. } *Linear<real_t>{1.};
@@ -243,23 +260,20 @@ namespace fm {
 	};
 
 
-	
-
-
 	template<class ValueTypeLeft, class ValueTypeRight>
 	class Addition : public Computable<typename Select<ValueTypeLeft, ValueTypeRight>::value_type> {
 	public:
 
 		using value_type = typename Select<ValueTypeLeft, ValueTypeRight>::value_type;
 
-		Addition(const Computable<ValueTypeLeft>& fl, const Computable<ValueTypeRight>& fr) :
+		Addition(const ComputableHolder<ValueTypeLeft>& fl, const ComputableHolder<ValueTypeRight>& fr) :
 			func_left_(fl),
 			func_right_(fr)
 		{}
 
 	private:
 
-		virtual value_type compute(value_type arg) const override {
+		virtual value_type computeValue(value_type arg) const override {
 			return func_left_(arg) + func_right_(arg);
 		}
 
@@ -271,8 +285,8 @@ namespace fm {
 			return func_left_.primitive() + func_right_.primitive();
 		}
 
-		Computable<ValueTypeLeft> func_left_;
-		Computable<ValueTypeRight> func_right_;
+		ComputableHolder<ValueTypeLeft> func_left_;
+		ComputableHolder<ValueTypeRight> func_right_;
 
 	};
 
@@ -280,11 +294,11 @@ namespace fm {
 	auto operator+(const ComputableHolder<ValueTypeLeft>& lhs, const ComputableHolder<ValueTypeRight>& rhs)
 		-> ComputableHolder<typename Select<ValueTypeLeft, ValueTypeRight>::value_type>
 	{
-		return{ std::move(Addition<ValueTypeLeft, ValueTypeRight>{ lhs, rhs }) };
-	}
+		return make_computable<Addition<ValueTypeLeft, ValueTypeRight>>(lhs, rhs);
+	};
 
 
-	
+
 
 
 	/*
@@ -294,33 +308,33 @@ namespace fm {
 	class Pow : public Computable<ValueType> {
 	public:
 
-		Pow(ValueType value) :
-			value_(value)
-		{}
+	Pow(ValueType value) :
+	value_(value)
+	{}
 
-		template<class ... Args>
-		ValueType compute(Args&& ... args) const;
+	template<class ... Args>
+	ValueType compute(Args&& ... args) const;
 
-		ValueType compute(ValueType x) const {
-			using std::pow;
-			return pow(x, value_);
-		}
+	ValueType compute(ValueType x) const {
+	using std::pow;
+	return pow(x, value_);
+	}
 
-		Computable<ValueType> computeDeritative() const {
-			return make_func<Const, ValueType>(value_) * make_func<Pow, ValueType>(value_ - 1);
-		}
+	Computable<ValueType> computeDeritative() const {
+	return make_func<Const, ValueType>(value_) * make_func<Pow, ValueType>(value_ - 1);
+	}
 
-		Computable<ValueType> computePrimitive() const {
-			return make_func<Pow, ValueType>(value_ + 1) * make_func<Const, ValueType>(1 / (value_ + 1));
-		}
+	Computable<ValueType> computePrimitive() const {
+	return make_func<Pow, ValueType>(value_ + 1) * make_func<Const, ValueType>(1 / (value_ + 1));
+	}
 
 	private:
 
-		const ValueType value_;
+	const ValueType value_;
 
 	};
 
-	
+
 	template<class ValueType> struct FracPow { ValueType fracPow; };
 	template<class ValueType> struct Invert { };
 	template<class ValueType> struct SquareRoot{ };
@@ -349,39 +363,39 @@ namespace fm {
 	class Substraction : Computable<ValueType> {
 	public:
 
-		Substraction(FunctionBaseLeft<ValueType> fl, FunctionBaseRight<ValueType> fr) :
-			func_left_(fl),
-			func_right_(fr)
-		{}
+	Substraction(FunctionBaseLeft<ValueType> fl, FunctionBaseRight<ValueType> fr) :
+	func_left_(fl),
+	func_right_(fr)
+	{}
 
-		template<class ... Args>
-		ValueType operator()(Args&& ... args) const {
-			return func_left_.compute(std::forward<Args>(args)...) - func_right_.compute(std::forward<Args>(args)...);
-		}
+	template<class ... Args>
+	ValueType operator()(Args&& ... args) const {
+	return func_left_.compute(std::forward<Args>(args)...) - func_right_.compute(std::forward<Args>(args)...);
+	}
 
-		Function<ValueType> computeDeritative() const {
-			return func_left_.computeDeritative() - func_right_.computeDeritative();
-		}
+	Function<ValueType> computeDeritative() const {
+	return func_left_.computeDeritative() - func_right_.computeDeritative();
+	}
 
-		Function<ValueType> computePrimitive() const {
-			return func_left_.computePrimitive() - func_right_.computePrimitive();
-		}
+	Function<ValueType> computePrimitive() const {
+	return func_left_.computePrimitive() - func_right_.computePrimitive();
+	}
 
 	private:
 
-		const FunctionBaseLeft<ValueType> func_left_;
-		const FunctionBaseRight<ValueType> func_right_;
+	const FunctionBaseLeft<ValueType> func_left_;
+	const FunctionBaseRight<ValueType> func_right_;
 
 	};
 
 	template<template <class> class FunctionBaseLeft, template <class> class FunctionBaseRight, class ValueType>
 	Computable<ValueType> operator-(FunctionBaseLeft<ValueType> lhs, FunctionBaseRight<ValueType> rhs) {
-		return{ Substraction<FunctionBaseLeft, FunctionBaseRight, ValueType>{ lhs, rhs } };
+	return{ Substraction<FunctionBaseLeft, FunctionBaseRight, ValueType>{ lhs, rhs } };
 	}
 
 	template<template <class> class FunctionBaseLeft, class ValueType>
 	Computable<ValueType> operator-(FunctionBaseLeft<ValueType> lhs) {
-		return{ Substraction<FunctionBaseLeft, Const, ValueType>{ make_func<Const, ValueType>(0), lhs } };
+	return{ Substraction<FunctionBaseLeft, Const, ValueType>{ make_func<Const, ValueType>(0), lhs } };
 	}
 
 	// Product
@@ -390,33 +404,33 @@ namespace fm {
 	class Product : Computable<ValueType> {
 	public:
 
-		Product(FunctionBaseLeft<ValueType> fl, FunctionBaseRight<ValueType> fr) :
-			func_left_(fl),
-			func_right_(fr)
-		{}
+	Product(FunctionBaseLeft<ValueType> fl, FunctionBaseRight<ValueType> fr) :
+	func_left_(fl),
+	func_right_(fr)
+	{}
 
-		template<class ... Args>
-		ValueType operator()(Args&& ... args) const {
-			return func_left_.compute(std::forward<Args>(args)...) * func_right_.compute(std::forward<Args>(args)...);
-		}
+	template<class ... Args>
+	ValueType operator()(Args&& ... args) const {
+	return func_left_.compute(std::forward<Args>(args)...) * func_right_.compute(std::forward<Args>(args)...);
+	}
 
-		Function<ValueType> computeDeritative() const {
-			return func_left_.computeDeritative() * func_right_ + func_left_ * func_right_.computeDeritative();
-		}
+	Function<ValueType> computeDeritative() const {
+	return func_left_.computeDeritative() * func_right_ + func_left_ * func_right_.computeDeritative();
+	}
 
-		Function<ValueType> computePrimitive() const {
-			static_assert(false, "Primitive(u*v) cannot be calculated :(");
-		}
+	Function<ValueType> computePrimitive() const {
+	static_assert(false, "Primitive(u*v) cannot be calculated :(");
+	}
 
 	private:
 
-		const FunctionBaseLeft<ValueType> func_left_;
-		const FunctionBaseRight<ValueType> func_right_;
+	const FunctionBaseLeft<ValueType> func_left_;
+	const FunctionBaseRight<ValueType> func_right_;
 	};
 
 	template<template <class> class FunctionBaseLeft, template <class> class FunctionBaseRight, class ValueType>
 	Computable<ValueType> operator*(FunctionBaseLeft<ValueType> lhs, FunctionBaseRight<ValueType> rhs) {
-		return{ Product<FunctionBaseLeft, FunctionBaseRight, ValueType>{ lhs, rhs } };
+	return{ Product<FunctionBaseLeft, FunctionBaseRight, ValueType>{ lhs, rhs } };
 	}
 	*/
 

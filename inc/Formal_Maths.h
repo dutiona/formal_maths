@@ -322,7 +322,7 @@ namespace fm {
 		};
 
 		virtual ComputableHolder<ValueType> computePrimitive() const override {
-			return make_computable<Pow<ValueType>>(pow_ + 1) * make_computable<Const<ValueType>>(1 / (pow_ + 1));
+			return make_computable<Pow<ValueType>>(pow_ + 1) / make_computable<Const<ValueType>>(pow_ + 1);
 		}
 
 		virtual bool isConst() const {

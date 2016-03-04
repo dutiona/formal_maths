@@ -493,12 +493,12 @@ namespace fm {
 		//FIXME
 		virtual value_type computeValue(value_type arg) const override {
 			const auto denominator = func_right_(arg);
-			assert(denomiator != 0);
+			assert(denominator != 0);
 			return func_left_(arg) / denominator;
 		}
 
 		virtual ComputableHolder<value_type> computeDeritative() const override {
-			return func_left_.deritative() * func_right + func_left_ * func_right_.deritative();
+			return func_left_.deritative() * func_right_ / func_left_ * func_right_.deritative();
 		}
 
 		virtual ComputableHolder<value_type> computePrimitive() const override {

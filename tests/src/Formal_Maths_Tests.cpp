@@ -32,6 +32,14 @@ int main(int /*argc*/, char* /*argv[]*/){
 	const auto bbb = deriv_f3(15.);
 	const auto ccc = prim_f3(15.);
 
+	const auto f4 = f1 * f2;
+	const auto defiv_f4 = f4.deritative();
+	const auto prim_f4 = f4.primitive();
+
+	const auto f5 = f2 / f1;
+	const auto defiv_f5 = f5.deritative();
+	const auto prim_f5 = f5.primitive();
+
 	std::cout << "Press enter to continue...";
 	std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 

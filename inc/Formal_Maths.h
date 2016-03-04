@@ -22,15 +22,16 @@
 #include <memory>
 #include <type_traits>
 
-#ifdef UNUSED
-#elif defined(__GNUC__)
-# define UNUSED(x) UNUSED_ ## x __attribute__((unused))
+#ifndef UNUSED
+#if defined(__GNUC__)
+#	define UNUSED(x) UNUSED_ ## x __attribute__((unused))
 #elif defined(__LCLINT__)
-# define UNUSED(x) /*@unused@*/ x
+#	define UNUSED(x) /*@unused@*/ x
 #elif defined(__cplusplus)
-# define UNUSED(x)
+#	define UNUSED(x)
 #else
-# define UNUSED(x) x
+#	define UNUSED(x) x
+#endif
 #endif
 
 namespace fm {
@@ -172,7 +173,7 @@ namespace fm {
 	class ComputableHolder {
 	public:
 
-		ComputableHolder(){}
+		ComputableHolder(){} //TODELETE
 		ComputableHolder(const std::shared_ptr<Computable<ValueType>>& computable) :
 			computable_(computable)
 		{}

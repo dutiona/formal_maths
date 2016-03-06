@@ -9,9 +9,9 @@
 using namespace fm;
 
 int main(int /*argc*/, char* /*argv[]*/){
-
-	const auto f1 = make_computable<Const<real_t>>(15.);
-	const auto f2 = make_computable<Linear<real_t>>(40.);
+	
+	const auto f1 = make_computable<LinearPow<real_t>>(15., 0);
+	const auto f2 = make_computable<LinearPow<real_t>>(40., 1);
 	const auto f3 = f1 + f2;
 	const auto deriv_f1 = f1.deritative();
 	const auto deriv_f2 = f2.deritative();
@@ -39,7 +39,7 @@ int main(int /*argc*/, char* /*argv[]*/){
 	const auto f5 = f2 / f1;
 	const auto defiv_f5 = f5.deritative();
 	const auto prim_f5 = f5.primitive();
-
+	
 	std::cout << "Press enter to continue...";
 	std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 

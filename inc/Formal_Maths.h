@@ -477,7 +477,8 @@ namespace fm {
 
 		template<class ValueTypeLeftCompLeft, class ValueTypeLeftCompRight, class ValueTypeRightCompLeft, class ValueTypeRightCompRight>
 		friend bool operator==(const Addition<ValueTypeLeftCompLeft, ValueTypeLeftCompRight>& lhs, const Addition<ValueTypeRightCompLeft, ValueTypeRightCompRight>& rhs) {
-			return lhs.func_left_ == rhs.func_left_ && lhs.func_right_ == lhs.func_right_;
+			return (lhs.func_left_ == rhs.func_left_ && lhs.func_right_ == rhs.func_right_) ||
+				(lhs.func_left_ == rhs.func_right_ && lhs.func_right_ == rhs.func_left_);
 		}
 	};
 
@@ -525,7 +526,8 @@ namespace fm {
 
 		template<class ValueTypeLeftCompLeft, class ValueTypeLeftCompRight, class ValueTypeRightCompLeft, class ValueTypeRightCompRight>
 		friend bool operator==(const Substraction<ValueTypeLeftCompLeft, ValueTypeLeftCompRight>& lhs, const Substraction<ValueTypeRightCompLeft, ValueTypeRightCompRight>& rhs) {
-			return lhs.func_left_ == rhs.func_left_ && lhs.func_right_ == lhs.func_right_;
+			return (lhs.func_left_ == rhs.func_left_ && lhs.func_right_ == rhs.func_right_) ||
+				(lhs.func_left_ == rhs.func_right_ && lhs.func_right_ == rhs.func_left_);
 		}
 	};
 
@@ -586,7 +588,8 @@ namespace fm {
 
 		template<class ValueTypeLeftCompLeft, class ValueTypeLeftCompRight, class ValueTypeRightCompLeft, class ValueTypeRightCompRight>
 		friend bool operator==(const Product<ValueTypeLeftCompLeft, ValueTypeLeftCompRight>& lhs, const Product<ValueTypeRightCompLeft, ValueTypeRightCompRight>& rhs) {
-			return lhs.func_left_ == rhs.func_left_ && lhs.func_right_ == lhs.func_right_;
+			return (lhs.func_left_ == rhs.func_left_ && lhs.func_right_ == rhs.func_right_) ||
+				(lhs.func_left_ == rhs.func_right_ && lhs.func_right_ == rhs.func_left_);
 		}
 	};
 
@@ -640,7 +643,7 @@ namespace fm {
 
 		template<class ValueTypeLeftCompLeft, class ValueTypeLeftCompRight, class ValueTypeRightCompLeft, class ValueTypeRightCompRight>
 		friend bool operator==(const Division<ValueTypeLeftCompLeft, ValueTypeLeftCompRight>& lhs, const Division<ValueTypeRightCompLeft, ValueTypeRightCompRight>& rhs) {
-			return lhs.func_left_ == rhs.func_left_ && lhs.func_right_ == lhs.func_right_;
+			return lhs.func_left_ == rhs.func_left_ && lhs.func_right_ == rhs.func_right_;
 		}
 	};
 
@@ -693,7 +696,7 @@ namespace fm {
 
 		template<class ValueTypeLeftCompLeft, class ValueTypeLeftCompRight, class ValueTypeRightCompLeft, class ValueTypeRightCompRight>
 		friend bool operator==(const Composition<ValueTypeLeftCompLeft, ValueTypeLeftCompRight>& lhs, const Composition<ValueTypeRightCompLeft, ValueTypeRightCompRight>& rhs) {
-			return lhs.func_out_ == rhs.func_out_ && lhs.func_in_ == lhs.func_in_;
+			return lhs.func_out_ == rhs.func_out_ && lhs.func_in_ == rhs.func_in_;
 		}
 	};
 

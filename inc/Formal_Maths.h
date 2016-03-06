@@ -664,8 +664,8 @@ namespace fm {
 		using value_type = typename Select<ValueTypeLeft, ValueTypeRight>::value_type;
 
 		Composition(const ComputableHolder<ValueTypeLeft>& fin, const ComputableHolder<ValueTypeRight>& fout) :
-			func_out_(fl),
-			func_in_(fr)
+			func_out_(fin),
+			func_in_(fout)
 		{}
 
 	private:

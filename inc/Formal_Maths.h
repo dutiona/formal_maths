@@ -146,7 +146,7 @@ namespace fm {
 
 		ComputeDeritativeError& operator=(const ComputeDeritativeError&) = delete;
 
-		virtual const char* what() const throw() {
+		virtual const char* what() const throw() override {
 			return message_.c_str();
 		}
 	private:
@@ -161,7 +161,7 @@ namespace fm {
 
 		ComputePrimitiveError& operator=(const ComputePrimitiveError&) = delete;
 
-		virtual const char* what() const throw() {
+		virtual const char* what() const throw() override {
 			return message_.c_str();
 		}
 	private:
@@ -241,23 +241,43 @@ namespace fm {
 		return{ std::make_shared<Function>(std::forward<Args>(args)...) };
 	}
 
-	// Linear
+	// LinearPow
     
     template<class ValueType> class Log;
 	template<class ValueType>
 	class LinearPow : public Computable<ValueType> {
 	public:
-
-		LinearPow() :
-			const_(static_cast<ValueType>(1)),
-			pow_(static_cast<ValueType>(1))
-		{}
-
-		LinearPow(ValueType c, ValueType pow) :
-			const_(c),
-			pow_(pow)
-		{}
-
+        
+        // a
+        static ComputableHolder<ValueType> NewConst(ValueType a) {
+            return New(a, static_cast<ValueType>(0));
+        }
+        
+        // ax
+        static ComputableHolder<ValueType> NewLinear(ValueType a) {
+            return New(a, static_cast<ValueType>(1));
+        }
+        
+        // a/x
+        static ComputableHolder<ValueType> NewLinearFrac(ValueType a) {
+            return NewFrac(a, static_cast<ValueType>(1));
+        }
+        
+        // a/x^n
+        static ComputableHolder<ValueType> NewFrac(ValueType a, ValueType n) {
+            return New(a, -n);
+        }
+        
+        // ax^n
+        static ComputableHolder<ValueType> New(ValueType a, ValueType n) {
+            return make_computable<LinearPow<ValueType>>(a, n);
+        }
+        
+        LinearPow(ValueType c, ValueType pow) :
+            const_(c),
+            pow_(pow)
+        {}
+        
 	private:
 
 		virtual ValueType computeValue(ValueType x) const override {
@@ -266,17 +286,17 @@ namespace fm {
 
 		virtual ComputableHolder<ValueType> computeDeritative() const override {
 			if (pow_ == 0) {
-				return make_computable<LinearPow<ValueType>>(static_cast<ValueType>(0), static_cast<ValueType>(0));
+                return LinearPow<ValueType>::NewConst(static_cast<ValueType>(0));
 			}
-			return make_computable<LinearPow<ValueType>>(const_ * (pow_), pow_ - 1);
+            return LinearPow<ValueType>::New(const_ * pow_, pow_ - static_cast<ValueType>(1));
 		};
 
 		virtual ComputableHolder<ValueType> computePrimitive() const override {
 			if (pow_ == static_cast<ValueType>(-1)) {
-				return make_computable<LinearPow<ValueType>>(const_, 0) * make_computable<Log<ValueType>>();
+                return LinearPow<ValueType>::NewConst(const_) * Log<ValueType>::New();
 			}
 
-			return make_computable<LinearPow<ValueType>>(const_ / (pow_ + 1), pow_ + 1);
+            return LinearPow<ValueType>::New(const_ / (pow_ + static_cast<ValueType>(1)), pow_ + static_cast<ValueType>(1));
 		}
 
 		virtual bool isConst() const {
@@ -295,9 +315,14 @@ namespace fm {
 	template<class ValueType>
 	class Log : public Computable<ValueType> {
 	public:
-
-		Log() {}
-
+        
+        // ln
+        static ComputableHolder<ValueType> New() {
+            return make_computable<Log<ValueType>>();
+        }
+        
+        Log() {}
+        
 	private:
 
 		virtual ValueType computeValue(ValueType x) const override {
@@ -305,11 +330,12 @@ namespace fm {
 		}
 
 		virtual ComputableHolder<ValueType> computeDeritative() const override {
-			return make_computable<LinearPow<ValueType>>(1, -1);
+            return LinearPow<ValueType>::NewLinearFrac(static_cast<ValueType>(1));
 		};
 
 		virtual ComputableHolder<ValueType> computePrimitive() const override {
-			return make_computable<LinearPow<ValueType>>(1, 1) * make_computable<Log<ValueType>>() - make_computable<LinearPow<ValueType>>(1, 1);
+            return LinearPow<ValueType>::NewLinear(static_cast<ValueType>(1)) * Log<ValueType>::New()
+                    - LinearPow<ValueType>::NewLinear(static_cast<ValueType>(1));
 		}
 
 		virtual bool isConst() const {
@@ -326,20 +352,25 @@ namespace fm {
 	class Exp : public Computable<ValueType> {
 	public:
 
-		Exp() {}
+        // exp
+        static ComputableHolder<ValueType> New() {
+            return make_computable<Exp<ValueType>>();
+        }
+        
+        Exp() {}
 
 	private:
-
+        
 		virtual ValueType computeValue(ValueType x) const override {
 			return std::exp(x);
 		}
 
 		virtual ComputableHolder<ValueType> computeDeritative() const override {
-			return make_computable<Exp<ValueType>>();
+            return Exp<ValueType>::New();
 		};
 
 		virtual ComputableHolder<ValueType> computePrimitive() const override {
-			return make_computable<Exp<ValueType>>();
+            return Exp<ValueType>::New();
 		}
 
 		virtual bool isConst() const {
@@ -358,8 +389,13 @@ namespace fm {
 	class Sin : public Computable<ValueType> {
 	public:
 
-		Sin() {}
+        // sin
+        static ComputableHolder<ValueType> New() {
+            return make_computable<Sin<ValueType>>();
+        }
 
+        Sin() {}
+        
 	private:
 
 		virtual ValueType computeValue(ValueType x) const override {
@@ -367,11 +403,11 @@ namespace fm {
 		}
 
 		virtual ComputableHolder<ValueType> computeDeritative() const override {
-			return make_computable<Cos<ValueType>>();
+            return Cos<ValueType>::New();
 		};
 
-		virtual ComputableHolder<ValueType> computePrimitive() const override {
-			return -make_computable<Cos<ValueType>>();
+        virtual ComputableHolder<ValueType> computePrimitive() const override {
+            return -Cos<ValueType>::New();
 		}
 
 		virtual bool isConst() const {
@@ -387,8 +423,13 @@ namespace fm {
 	template<class ValueType>
 	class Cos : public Computable<ValueType> {
 	public:
-
-		Cos() {}
+        
+        // cos
+        static ComputableHolder<ValueType> New() {
+            return make_computable<Cos<ValueType>>();
+        }
+        
+        Cos() {}
 
 	private:
 
@@ -397,11 +438,11 @@ namespace fm {
 		}
 
 		virtual ComputableHolder<ValueType> computeDeritative() const override {
-			return -make_computable<Sin<ValueType>>();
+            return -Sin<ValueType>::New();
 		};
 
 		virtual ComputableHolder<ValueType> computePrimitive() const override {
-			return make_computable<Sin<ValueType>>();
+            return Sin<ValueType>::New();
 		}
 
 		virtual bool isConst() const {
@@ -418,7 +459,12 @@ namespace fm {
 	class Tan : public Computable<ValueType> {
 	public:
 
-		Tan() {}
+        // Tan
+        static ComputableHolder<ValueType> New() {
+            return make_computable<Tan<ValueType>>();
+        }
+        
+        Tan() {}
 
 	private:
 
@@ -427,11 +473,11 @@ namespace fm {
 		}
 
 		virtual ComputableHolder<ValueType> computeDeritative() const override {
-			return make_computable<LinearPow<ValueType>>(1, 0) + make_computable<Tan<ValueType>>() * make_computable<Tan<ValueType>>();
+            return LinearPow<ValueType>::NewConst(1) + Tan<ValueType>::New() * Tan<ValueType>::New();
 		};
 
 		virtual ComputableHolder<ValueType> computePrimitive() const override {
-			return -(make_computable<Log<ValueType>>() ^ make_computable<Cos<ValueType>>(1));
+            return -(Log<ValueType>::New() ^ Cos<ValueType>::New());
 		}
 
 		virtual bool isConst() const {
@@ -442,7 +488,7 @@ namespace fm {
 		friend bool operator==(const Tan<ValueTypeLeft>& lhs, const Tan<ValueTypeRight>& rhs) {
 			return true;
 		}
-	};
+    };
 
 	// Addition
 
@@ -451,12 +497,18 @@ namespace fm {
 	public:
 
 		using value_type = typename Select<ValueTypeLeft, ValueTypeRight>::value_type;
-
-		Addition(const ComputableHolder<ValueTypeLeft>& fl, const ComputableHolder<ValueTypeRight>& fr) :
-			func_left_(fl),
-			func_right_(fr)
-		{}
-
+        
+        // u + v
+        static ComputableHolder<value_type> New(const ComputableHolder<ValueTypeLeft>& lhs,
+                                                const ComputableHolder<ValueTypeRight>& rhs) {
+            return make_computable<Addition<ValueTypeLeft, ValueTypeRight>>(lhs, rhs);
+        }
+        
+        Addition(const ComputableHolder<ValueTypeLeft>& fl, const ComputableHolder<ValueTypeRight>& fr) :
+            func_left_(fl),
+            func_right_(fr)
+        {}
+        
 	private:
 
 		virtual value_type computeValue(value_type arg) const override {
@@ -478,20 +530,22 @@ namespace fm {
 		ComputableHolder<ValueTypeLeft> func_left_;
 		ComputableHolder<ValueTypeRight> func_right_;
 
-		template<class ValueTypeLeftCompLeft, class ValueTypeLeftCompRight, class ValueTypeRightCompLeft, class ValueTypeRightCompRight>
-		friend bool operator==(const Addition<ValueTypeLeftCompLeft, ValueTypeLeftCompRight>& lhs, const Addition<ValueTypeRightCompLeft, ValueTypeRightCompRight>& rhs) {
+		template<class ValueTypeLeftCompLeft, class ValueTypeLeftCompRight,
+                class ValueTypeRightCompLeft, class ValueTypeRightCompRight>
+		friend bool operator==(const Addition<ValueTypeLeftCompLeft, ValueTypeLeftCompRight>& lhs,
+                               const Addition<ValueTypeRightCompLeft, ValueTypeRightCompRight>& rhs) {
 			return (lhs.func_left_ == rhs.func_left_ && lhs.func_right_ == rhs.func_right_) ||
 				(lhs.func_left_ == rhs.func_right_ && lhs.func_right_ == rhs.func_left_);
 		}
 	};
 
-	template<class ValueTypeLeft, class ValueTypeRight>
-	auto operator+(const ComputableHolder<ValueTypeLeft>& lhs, const ComputableHolder<ValueTypeRight>& rhs)
-		-> ComputableHolder<typename Select<ValueTypeLeft, ValueTypeRight>::value_type>
-	{
-		return make_computable<Addition<ValueTypeLeft, ValueTypeRight>>(lhs, rhs);
-	}
-
+    template<class ValueTypeLeft, class ValueTypeRight>
+    auto operator+(const ComputableHolder<ValueTypeLeft>& lhs,
+                   const ComputableHolder<ValueTypeRight>& rhs)
+        -> ComputableHolder<typename Select<ValueTypeLeft, ValueTypeRight>::value_type>
+    {
+        return Addition<ValueTypeLeft, ValueTypeRight>::New(lhs, rhs);
+    }
 
 	// Substraction
 
@@ -501,10 +555,16 @@ namespace fm {
 
 		using value_type = typename Select<ValueTypeLeft, ValueTypeRight>::value_type;
 
-		Substraction(const ComputableHolder<ValueTypeLeft>& fl, const ComputableHolder<ValueTypeRight>& fr) :
-			func_left_(fl),
-			func_right_(fr)
-		{}
+        // u - v
+        static ComputableHolder<value_type> New(const ComputableHolder<ValueTypeLeft>& lhs,
+                                                        const ComputableHolder<ValueTypeRight>& rhs) {
+            return make_computable<Substraction<ValueTypeLeft, ValueTypeRight>>(lhs, rhs);
+        }
+        
+        Substraction(const ComputableHolder<ValueTypeLeft>& fl, const ComputableHolder<ValueTypeRight>& fr) :
+            func_left_(fl),
+            func_right_(fr)
+        {}
 
 	private:
 
@@ -527,8 +587,10 @@ namespace fm {
 		ComputableHolder<ValueTypeLeft> func_left_;
 		ComputableHolder<ValueTypeRight> func_right_;
 
-		template<class ValueTypeLeftCompLeft, class ValueTypeLeftCompRight, class ValueTypeRightCompLeft, class ValueTypeRightCompRight>
-		friend bool operator==(const Substraction<ValueTypeLeftCompLeft, ValueTypeLeftCompRight>& lhs, const Substraction<ValueTypeRightCompLeft, ValueTypeRightCompRight>& rhs) {
+		template<class ValueTypeLeftCompLeft, class ValueTypeLeftCompRight,
+                class ValueTypeRightCompLeft, class ValueTypeRightCompRight>
+		friend bool operator==(const Substraction<ValueTypeLeftCompLeft, ValueTypeLeftCompRight>& lhs,
+                               const Substraction<ValueTypeRightCompLeft, ValueTypeRightCompRight>& rhs) {
 			return (lhs.func_left_ == rhs.func_left_ && lhs.func_right_ == rhs.func_right_) ||
 				(lhs.func_left_ == rhs.func_right_ && lhs.func_right_ == rhs.func_left_);
 		}
@@ -538,12 +600,12 @@ namespace fm {
 	auto operator-(const ComputableHolder<ValueTypeLeft>& lhs, const ComputableHolder<ValueTypeRight>& rhs)
 		-> ComputableHolder<typename Select<ValueTypeLeft, ValueTypeRight>::value_type>
 	{
-		return make_computable<Substraction<ValueTypeLeft, ValueTypeRight>>(lhs, rhs);
+        return Substraction<ValueTypeLeft, ValueTypeRight>::New(lhs, rhs);
 	}
 
 	template<class ValueType>
 	ComputableHolder<ValueType> operator-(const ComputableHolder<ValueType>& rhs) {
-		return make_computable<Substraction<ValueType, ValueType>>(make_computable<LinearPow<ValueType>>(), rhs);
+        return Substraction<ValueType, ValueType>::New(LinearPow<ValueType>::NewConst(static_cast<ValueType>(0)), rhs);
 	}
 
 
@@ -555,10 +617,16 @@ namespace fm {
 
 		using value_type = typename Select<ValueTypeLeft, ValueTypeRight>::value_type;
 
-		Product(const ComputableHolder<ValueTypeLeft>& fl, const ComputableHolder<ValueTypeRight>& fr) :
-			func_left_(fl),
-			func_right_(fr)
-		{}
+        // u * v
+        static ComputableHolder<value_type> New(const ComputableHolder<ValueTypeLeft>& lhs,
+                                                const ComputableHolder<ValueTypeRight>& rhs) {
+            return make_computable<Product<ValueTypeLeft, ValueTypeRight>>(lhs, rhs);
+        }
+        
+        Product(const ComputableHolder<ValueTypeLeft>& fl, const ComputableHolder<ValueTypeRight>& fr) :
+            func_left_(fl),
+            func_right_(fr)
+        {}
 
 	private:
 
@@ -589,8 +657,10 @@ namespace fm {
 		ComputableHolder<ValueTypeLeft> func_left_;
 		ComputableHolder<ValueTypeRight> func_right_;
 
-		template<class ValueTypeLeftCompLeft, class ValueTypeLeftCompRight, class ValueTypeRightCompLeft, class ValueTypeRightCompRight>
-		friend bool operator==(const Product<ValueTypeLeftCompLeft, ValueTypeLeftCompRight>& lhs, const Product<ValueTypeRightCompLeft, ValueTypeRightCompRight>& rhs) {
+		template<class ValueTypeLeftCompLeft, class ValueTypeLeftCompRight,
+                class ValueTypeRightCompLeft, class ValueTypeRightCompRight>
+		friend bool operator==(const Product<ValueTypeLeftCompLeft, ValueTypeLeftCompRight>& lhs,
+                               const Product<ValueTypeRightCompLeft, ValueTypeRightCompRight>& rhs) {
 			return (lhs.func_left_ == rhs.func_left_ && lhs.func_right_ == rhs.func_right_) ||
 				(lhs.func_left_ == rhs.func_right_ && lhs.func_right_ == rhs.func_left_);
 		}
@@ -600,7 +670,7 @@ namespace fm {
 	auto operator*(const ComputableHolder<ValueTypeLeft>& lhs, const ComputableHolder<ValueTypeRight>& rhs)
 		-> ComputableHolder<typename Select<ValueTypeLeft, ValueTypeRight>::value_type>
 	{
-		return make_computable<Product<ValueTypeLeft, ValueTypeRight>>(lhs, rhs);
+        return Product<ValueTypeLeft, ValueTypeRight>::New(lhs, rhs);
 	}
 
 	// Division
@@ -610,11 +680,17 @@ namespace fm {
 	public:
 
 		using value_type = typename Select<ValueTypeLeft, ValueTypeRight>::value_type;
-
-		Division(const ComputableHolder<ValueTypeLeft>& fl, const ComputableHolder<ValueTypeRight>& fr) :
-			func_left_(fl),
-			func_right_(fr)
-		{}
+        
+        // u / v
+        static ComputableHolder<value_type> New(const ComputableHolder<ValueTypeLeft>& lhs,
+                                                const ComputableHolder<ValueTypeRight>& rhs) {
+            return make_computable<Division<ValueTypeLeft, ValueTypeRight>>(lhs, rhs);
+        }
+        
+        Division(const ComputableHolder<ValueTypeLeft>& fl, const ComputableHolder<ValueTypeRight>& fr) :
+            func_left_(fl),
+            func_right_(fr)
+        {}
 
 	private:
 
@@ -644,8 +720,10 @@ namespace fm {
 		ComputableHolder<ValueTypeLeft> func_left_;
 		ComputableHolder<ValueTypeRight> func_right_;
 
-		template<class ValueTypeLeftCompLeft, class ValueTypeLeftCompRight, class ValueTypeRightCompLeft, class ValueTypeRightCompRight>
-		friend bool operator==(const Division<ValueTypeLeftCompLeft, ValueTypeLeftCompRight>& lhs, const Division<ValueTypeRightCompLeft, ValueTypeRightCompRight>& rhs) {
+		template<class ValueTypeLeftCompLeft, class ValueTypeLeftCompRight,
+                class ValueTypeRightCompLeft, class ValueTypeRightCompRight>
+		friend bool operator==(const Division<ValueTypeLeftCompLeft, ValueTypeLeftCompRight>& lhs,
+                               const Division<ValueTypeRightCompLeft, ValueTypeRightCompRight>& rhs) {
 			return lhs.func_left_ == rhs.func_left_ && lhs.func_right_ == rhs.func_right_;
 		}
 	};
@@ -654,7 +732,7 @@ namespace fm {
 	auto operator/(const ComputableHolder<ValueTypeLeft>& lhs, const ComputableHolder<ValueTypeRight>& rhs)
 		-> ComputableHolder<typename Select<ValueTypeLeft, ValueTypeRight>::value_type>
 	{
-		return make_computable<Division<ValueTypeLeft, ValueTypeRight>>(lhs, rhs);
+        return Division<ValueTypeLeft, ValueTypeRight>::New(lhs, rhs);
 	}
 
 
@@ -666,11 +744,17 @@ namespace fm {
 
 		using value_type = typename Select<ValueTypeLeft, ValueTypeRight>::value_type;
 
-		Composition(const ComputableHolder<ValueTypeLeft>& fin, const ComputableHolder<ValueTypeRight>& fout) :
-			func_out_(fin),
-			func_in_(fout)
-		{}
+        // u ^ v
+        static ComputableHolder<value_type> New(const ComputableHolder<ValueTypeLeft>& lhs,
+                                                const ComputableHolder<ValueTypeRight>& rhs) {
+            return make_computable<Composition<ValueTypeLeft, ValueTypeRight>>(lhs, rhs);
+        }
 
+        Composition(const ComputableHolder<ValueTypeLeft>& fin, const ComputableHolder<ValueTypeRight>& fout) :
+            func_out_(fin),
+            func_in_(fout)
+        {}
+        
 	private:
 
 		virtual value_type computeValue(value_type arg) const override {
@@ -697,8 +781,10 @@ namespace fm {
 		ComputableHolder<ValueTypeLeft> func_out_;
 		ComputableHolder<ValueTypeRight> func_in_;
 
-		template<class ValueTypeLeftCompLeft, class ValueTypeLeftCompRight, class ValueTypeRightCompLeft, class ValueTypeRightCompRight>
-		friend bool operator==(const Composition<ValueTypeLeftCompLeft, ValueTypeLeftCompRight>& lhs, const Composition<ValueTypeRightCompLeft, ValueTypeRightCompRight>& rhs) {
+		template<class ValueTypeLeftCompLeft, class ValueTypeLeftCompRight,
+                class ValueTypeRightCompLeft, class ValueTypeRightCompRight>
+		friend bool operator==(const Composition<ValueTypeLeftCompLeft, ValueTypeLeftCompRight>& lhs,
+                               const Composition<ValueTypeRightCompLeft, ValueTypeRightCompRight>& rhs) {
 			return lhs.func_out_ == rhs.func_out_ && lhs.func_in_ == rhs.func_in_;
 		}
 	};
@@ -707,7 +793,7 @@ namespace fm {
 	auto operator^(const ComputableHolder<ValueTypeLeft>& lhs, const ComputableHolder<ValueTypeRight>& rhs)
 		-> ComputableHolder<typename Select<ValueTypeLeft, ValueTypeRight>::value_type>
 	{
-		return make_computable<Composition<ValueTypeLeft, ValueTypeRight>>(lhs, rhs);
+        return Composition<ValueTypeLeft, ValueTypeRight>::New(lhs, rhs);
 	}
 
 

@@ -88,8 +88,8 @@ namespace fm {
 	bool operator>(InfinityType lhs, InfinityType rhs) { return lhs.sign == PositiveInfinity.sign && rhs.sign == NegativeInfinity.sign; }
 	bool operator>=(InfinityType lhs, InfinityType rhs) { return lhs > rhs; }
 
-	template<class T> bool operator==(const T& UNUSED(lhs), const InfinityType& UNUSED(rhs)) { return false }
-	template<class T> bool operator!=(const T& lhs, const InfinityType& inf) { return !(lhs == rhs); }
+    template<class T> bool operator==(const T& UNUSED(lhs), const InfinityType& UNUSED(rhs)) { return false; }
+	template<class T> bool operator!=(const T& lhs, const InfinityType& inf) { return !(lhs == inf); }
 	template<class T> bool operator>(const T& UNUSED(lhs), const InfinityType& inf) { return inf.sign != InfinityType::PLUS; }
 	template<class T> bool operator>=(const T& lhs, const InfinityType& inf) { return lhs > inf; }
 	template<class T> bool operator<(const T& UNUSED(lhs), const InfinityType& inf) { return inf.sign != InfinityType::MINUS; }
@@ -181,7 +181,7 @@ namespace fm {
 	class Computable {
 	public:
 
-		using value_type = typename ValueType;
+		using value_type = ValueType;
 
 		Computable(const Computable&) = delete;
 		Computable& operator=(const Computable&) = delete;
@@ -242,7 +242,8 @@ namespace fm {
 	}
 
 	// Linear
-
+    
+    template<class ValueType> class Log;
 	template<class ValueType>
 	class LinearPow : public Computable<ValueType> {
 	public:
@@ -350,6 +351,8 @@ namespace fm {
 			return true;
 		}
 	};
+
+    template<class ValueType> class Cos;
 
 	template<class ValueType>
 	class Sin : public Computable<ValueType> {
@@ -540,7 +543,7 @@ namespace fm {
 
 	template<class ValueType>
 	ComputableHolder<ValueType> operator-(const ComputableHolder<ValueType>& rhs) {
-		return make_computable<Substraction<ValueType, ValueType>>(make_computable<Const<ValueType>>(0), rhs);
+		return make_computable<Substraction<ValueType, ValueType>>(make_computable<LinearPow<ValueType>>(), rhs);
 	}
 
 

@@ -8,7 +8,7 @@
 
 using namespace fm;
 
-int main(int /*argc*/, char* /*argv[]*/){
+int main(int /*argc*/, char** /*argv*/){
 	
 	const auto f1 = make_computable<LinearPow<real_t>>(15., 0);
 	const auto f2 = make_computable<LinearPow<real_t>>(40., 1);

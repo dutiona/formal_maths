@@ -10,8 +10,8 @@ using namespace fm;
 
 int main(int /*argc*/, char** /*argv*/){
     
-    const auto f1 = LinearPow<real_t>::NewConst(15.);
-    const auto f2 = LinearPow<real_t>::NewLinear(40.);
+    const auto f1 = LinearPow<real_t>::NewConst(15);
+	const auto f2 = LinearPow<real_t>::NewLinear(40);
     const auto f3 = f1 + f2;
     const auto deriv_f1 = f1.deritative();
     const auto deriv_f2 = f2.deritative();
@@ -19,6 +19,16 @@ int main(int /*argc*/, char** /*argv*/){
     const auto prim_f1 = f1.primitive();
     const auto prim_f2 = f2.primitive();
     const auto prim_f3 = f3.primitive();
+
+	std::cout << f1 << std::endl;
+	std::cout << f2 << std::endl;
+	std::cout << f3 << std::endl;
+
+	std::cout << f2 + f3 << std::endl;
+	std::cout << f2 - f3 << std::endl;
+	std::cout << f2 * f3 << std::endl;
+	std::cout << f2 / f3 << std::endl;
+	//std::cout << f2 ^ f3 << std::endl;
 
     const auto a = f1(1.);
     const auto b = deriv_f1(15.);

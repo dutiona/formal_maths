@@ -15,13 +15,14 @@
 
 #include "Formal_Maths_config.h"
 
-#include <stdexcept>
 #include <cassert>
 #include <complex>
 #include <functional>
 #include <limits>
 #include <memory>
+#include <ostream>
 #include <string>
+#include <stdexcept>
 #include <type_traits>
 
 #ifndef UNUSED
@@ -194,6 +195,7 @@ namespace fm {
         ComputableHolder<ValueType> deritative() const { return computeDeritative(); }
         ComputableHolder<ValueType> primitive() const { return computePrimitive(); }
         virtual bool isConst() const { return false; }
+		std::string str(const std::string& in) const { return getStr(in); }
 
     protected:
 
@@ -201,6 +203,7 @@ namespace fm {
 
     private:
 
+		virtual std::string getStr(const std::string& in) const = 0;
         virtual ValueType computeValue(ValueType) const = 0;
         virtual ComputableHolder<ValueType> computeDeritative() const = 0;
         virtual ComputableHolder<ValueType> computePrimitive() const = 0;
@@ -225,6 +228,18 @@ namespace fm {
         ComputableHolder<ValueType> deritative() const { return computable_->deritative(); }
         ComputableHolder<ValueType> primitive() const { return computable_->primitive(); }
         bool isConst() const { return computable_->isConst(); }
+
+		const Computable<ValueType>& operator*() const {
+			return *computable_;
+		}
+
+		const Computable<ValueType>* operator->() const {
+			return computable_.get();
+		}
+
+		const Computable<ValueType>* operator&() const {
+			return computable_.get();
+		}
 
     private:
 
@@ -299,9 +314,24 @@ namespace fm {
             return LinearPow<ValueType>::New(const_ / (pow_ + static_cast<ValueType>(1)), pow_ + static_cast<ValueType>(1));
         }
 
-        virtual bool isConst() const {
+        virtual bool isConst() const override {
             return pow_ == static_cast<ValueType>(0);
         }
+
+		virtual std::string getStr(const std::string& in) const override {
+			if (pow_ == static_cast<ValueType>(0)) {
+				return std::to_string(const_);
+			}
+			else if (pow_ == static_cast<ValueType>(1)) {
+				return std::to_string(const_) + " * (" + in + ")";
+			}
+			else if (pow_ < static_cast<ValueType>(0)){
+				return std::to_string(const_) + " / (" + in + ")^" + std::to_string(-pow_);
+			}
+			else {
+				return std::to_string(const_) + " * (" + in + ")^(" + std::to_string(pow_) + ")";
+			}
+		}
 
         ValueType const_;
         ValueType pow_;
@@ -342,6 +372,10 @@ namespace fm {
             return false;
         }
 
+		virtual std::string getStr(const std::string& in) const override {
+			return "ln(" + in + ")";
+		}
+
         template<class ValueTypeLeft, class ValueTypeRight>
         friend bool operator==(const Log<ValueTypeLeft>& lhs, const Log<ValueTypeRight>& rhs) {
             return true;
@@ -376,6 +410,10 @@ namespace fm {
         virtual bool isConst() const {
             return false;
         }
+
+		virtual std::string getStr(const std::string& in) const override {
+			return "exp(" + in + ")";
+		}
 
         template<class ValueTypeLeft, class ValueTypeRight>
         friend bool operator==(const Exp<ValueTypeLeft>& lhs, const Exp<ValueTypeRight>& rhs) {
@@ -414,6 +452,10 @@ namespace fm {
             return false;
         }
 
+		virtual std::string getStr(const std::string& in) const override {
+			return "sin(" + in + ")";
+		}
+
         template<class ValueTypeLeft, class ValueTypeRight>
         friend bool operator==(const Sin<ValueTypeLeft>& lhs, const Sin<ValueTypeRight>& rhs) {
             return true;
@@ -449,6 +491,10 @@ namespace fm {
             return false;
         }
 
+		virtual std::string getStr(const std::string& in) const override {
+			return "cos(" + in + ")";
+		}
+
         template<class ValueTypeLeft, class ValueTypeRight>
         friend bool operator==(const Cos<ValueTypeLeft>& lhs, const Cos<ValueTypeRight>& rhs) {
             return true;
@@ -483,6 +529,10 @@ namespace fm {
         virtual bool isConst() const {
             return false;
         }
+
+		virtual std::string getStr(const std::string& in) const override {
+			return "tan(" + in + ")";
+		}
 
         template<class ValueTypeLeft, class ValueTypeRight>
         friend bool operator==(const Tan<ValueTypeLeft>& lhs, const Tan<ValueTypeRight>& rhs) {
@@ -526,6 +576,10 @@ namespace fm {
         virtual bool isConst() const {
             return func_left_.isConst() && func_right_.isConst();
         }
+
+		virtual std::string getStr(const std::string& in) const override {
+			return "(" + func_left_->str(in) + ") + (" + func_right_->str(in) + ")";
+		}
 
         ComputableHolder<ValueTypeLeft> func_left_;
         ComputableHolder<ValueTypeRight> func_right_;
@@ -583,6 +637,10 @@ namespace fm {
         virtual bool isConst() const {
             return func_left_.isConst() && func_right_.isConst();
         }
+
+		virtual std::string getStr(const std::string& in) const override {
+			return "(" + func_left_->str(in) + ") - (" + func_right_->str(in) + ")";
+		}
 
         ComputableHolder<ValueTypeLeft> func_left_;
         ComputableHolder<ValueTypeRight> func_right_;
@@ -654,6 +712,10 @@ namespace fm {
             return func_left_.isConst() && func_right_.isConst();
         }
 
+		virtual std::string getStr(const std::string& in) const override {
+			return "(" + func_left_->str(in) + ") * (" + func_right_->str(in) + ")";
+		}
+
         ComputableHolder<ValueTypeLeft> func_left_;
         ComputableHolder<ValueTypeRight> func_right_;
 
@@ -717,6 +779,10 @@ namespace fm {
             return func_left_.isConst() && func_right_.isConst();
         }
 
+		virtual std::string getStr(const std::string& in) const override {
+			return "(" + func_left_->str(in) + ") / (" + func_right_->str(in) + ")";
+		}
+
         ComputableHolder<ValueTypeLeft> func_left_;
         ComputableHolder<ValueTypeRight> func_right_;
 
@@ -778,6 +844,10 @@ namespace fm {
             return func_out_.isConst() && func_in_.isConst();
         }
 
+		virtual std::string getStr(const std::string& in) const override {
+			return func_out_->str(func_in_.str(in));
+		}
+
         ComputableHolder<ValueTypeLeft> func_out_;
         ComputableHolder<ValueTypeRight> func_in_;
 
@@ -796,6 +866,11 @@ namespace fm {
         return Composition<ValueTypeLeft, ValueTypeRight>::New(lhs, rhs);
     }
 
+	template<class ValueType>
+	std::ostream& operator<<(std::ostream& os, const ComputableHolder<ValueType>& ch) {
+		os << ch->str("x");
+		return os;
+	}
 
     /*
     template<class ValueType> struct ACos { };

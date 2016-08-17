@@ -828,7 +828,7 @@ namespace fm {
         }
 
         virtual ComputableHolder<value_type> computeDeritative() const override {
-            return func_in_.deritative() * (func_out_.deritative() ^ func_in_);
+            return func_in_.deritative() * (func_out_.deritative() % func_in_);
         }
 
         virtual ComputableHolder<value_type> computePrimitive() const override {
@@ -845,7 +845,7 @@ namespace fm {
         }
 
 		virtual std::string getStr(const std::string& in) const override {
-			return func_out_->str(func_in_.str(in));
+			return func_out_->str(func_in_->str(in));
 		}
 
         ComputableHolder<ValueTypeLeft> func_out_;
@@ -860,7 +860,7 @@ namespace fm {
     };
 
     template<class ValueTypeLeft, class ValueTypeRight>
-    auto operator^(const ComputableHolder<ValueTypeLeft>& lhs, const ComputableHolder<ValueTypeRight>& rhs)
+    auto operator%(const ComputableHolder<ValueTypeLeft>& lhs, const ComputableHolder<ValueTypeRight>& rhs)
         -> ComputableHolder<typename Select<ValueTypeLeft, ValueTypeRight>::value_type>
     {
         return Composition<ValueTypeLeft, ValueTypeRight>::New(lhs, rhs);

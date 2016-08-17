@@ -28,7 +28,7 @@ int main(int /*argc*/, char** /*argv*/){
 	std::cout << f2 - f3 << std::endl;
 	std::cout << f2 * f3 << std::endl;
 	std::cout << f2 / f3 << std::endl;
-	//std::cout << f2 ^ f3 << std::endl;
+	std::cout << f2 % f3 << std::endl;
 
     const auto a = f1(1.);
     const auto b = deriv_f1(15.);
